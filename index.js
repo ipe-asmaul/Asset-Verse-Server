@@ -67,6 +67,20 @@ async function run() {
 
   })
 
+  app.get('/assets', async(req, res)=>{
+    const DB = client.db('Asset-Verse')
+    const collection = DB.collection('assets')
+    const query = {} 
+    if(req.query.id){
+      const result = await collection.findOne({_id: new ObjectId(req.query.id)});
+      res.send(result)
+      return;
+    }
+    const result = await collection.find(query).toArray();
+    res.send(result)
+  
+  })
+
   app.post('/requests', async(req, res)=>{
     const DB = client.db('Asset-Verse')
     const collection = DB.collection('requests')  
@@ -95,6 +109,29 @@ async function run() {
     const data = req.body; 
     const id = req.query.id;
     const result = await collection.updateOne({_id: new ObjectId(id)}, {$set: {requestStatus: data.requestStatus, approvalDate: data.approvalDate, processedBy: data.processedBy}});
+    res.send(result)
+  });
+  app.post('/assign-asset', async(req, res)=>{
+    const DB = client.db('Asset-Verse')
+    const collection = DB.collection('assignedAssets')
+    const data = req.body;
+    const findInfo = await collection.findOne({assetId: data.assetId, employeeEmail: data.employeeEmail});
+    if(findInfo){
+      return res.send({message: 'Asset already assigned to this employee'})
+    }
+    const result = await collection.insertOne(data);
+    res.send(result)
+
+  })
+  app.post('/employee-affiliations', async(req, res)=>{
+    const DB = client.db('Asset-Verse')
+    const collection = DB.collection('employeeAffiliations')
+    const data = req.body;
+    const findInfo = await collection.findOne({employeeEmail: data.employeeEmail});
+    if(findInfo){
+      return res.send({message: 'Affiliation already exists'})
+    }
+    const result = await collection.insertOne(data);
     res.send(result)
   })
 
